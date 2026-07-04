@@ -1,66 +1,81 @@
-use std::fs;
-use std::io;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use crate::error::FileError;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum FileType {
-    Text,
-    Markdown,
-    Rust,
-    Python,
     Json,
-    Toml,
+    Text,
     Yaml,
+    Markdown,
+    Html,
+    Rtf,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileData {
     pub file_type: FileType,
     pub text: String,
-    pub path: String,
+    pub path: PathBuf,
 }
 
 impl FileData {
-    pub fn from_file<P: AsRef<Path>>(path: P) -> Result<Self, std::io::Error> {
-        let file_path = path.as_ref();
-        let file_type = detect_file_type(file_path)?;
-        let file_text = fs::read_to_string(file_path)?;
-        Ok(Self {
-            file_type,
-            text: file_text,
-            path: file_path.to_string_lossy().into_owned(),
-        })
-    }
-}
-fn detect_file_type(path: &Path) -> Result<FileType, io::Error> {
-    let extension = path
-        .extension()
-        .and_then(|s| s.to_str())
-        .map(|s| s.to_lowercase());
+    pub fn detect_filetype(path: &Path) -> Result<FileType, FileError> {
+        let extension = path
+            .extension()
+            .ok_or(FileError::MissingExtension)?
+            .to_str()
+            .ok_or(FileError::InvalidPath)?
+            .to_lowercase();
 
-    match extension.as_deref() {
-        Some("txt") => Ok(FileType::Text),
-        Some("md") => Ok(FileType::Markdown),
-        Some("rs") => Ok(FileType::Rust),
-        Some("py") => Ok(FileType::Python),
-        Some("json") => Ok(FileType::Json),
-        Some("toml") => Ok(FileType::Toml),
-        Some("yml") | Some("yaml") => Ok(FileType::Yaml),
-        _ => Err(io::Error::new(
-            io::ErrorKind::InvalidInput,
-            "Unsupported file type",
-        )),
+        let file_type = match extension.as_str() {
+            "md" => FileType::Markdown,
+            "json" => FileType::Json,
+            "yaml" => FileType::Yaml,
+            "yml" => FileType::Yaml,
+            "txt" => FileType::Text,
+            "rtf" => FileType::Rtf,
+            "html" => FileType::Html,
+            _ => return Err(FileError::UnsupportedExtension),
+        };
+
+        Ok(file_type)
+    }
+
+    pub fn from_file(path: &Path) -> Result<FileData, FileError> {
+        let file_type = Self::detect_filetype(path)?;
+
+        let text = std::fs::read_to_string(path).map_err(|_| FileError::ReadFailed)?;
+
+        if text.is_empty() {
+            return Err(FileError::EmptyFile);
+        }
+
+        Ok(FileData {
+            file_type,
+            text,
+            path: path.to_path_buf(),
+        })
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
-    fn test_file_data_from_file() {
-        let file_data = super::FileData::from_file("src/document.rs").expect("Failed to read file");
-        assert_eq!(file_data.file_type, super::FileType::Rust);
-        assert!(file_data.text.contains("pub struct FileData"));
-        assert_eq!(file_data.path, "src/document.rs");
+    fn detects_markdown_filetype() {
+        let path = Path::new("notes.md");
+
+        let result = FileData::detect_filetype(path);
+
+        assert_eq!(result.unwrap(), FileType::Markdown);
+    }
+
+    #[test]
+    fn detects_yaml_filetype() {
+        let path = Path::new("text.yaml");
+        let result = FileData::detect_filetype(path);
+        assert_eq!(result.unwrap(), FileType::Yaml);
     }
 }
