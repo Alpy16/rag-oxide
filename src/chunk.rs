@@ -26,25 +26,30 @@ pub fn from_file_data(
     let mut current_line_count = 0;
     let mut chunks: Vec<Chunk> = Vec::new();
     let mut next_chunk_id = starting_chunk_id;
-    for (line_number, line) in file_data.text.lines().enumerate() {
+    let mut current_byte_offset = 0;
+    let mut current_start_byte = 0;
+    for (line_number, line_with_newline) in file_data.text.split_inclusive('\n').enumerate() {
         let actual_line_number = line_number + 1;
-        current_chunk_text.push_str(line);
-        current_chunk_text.push('\n');
+
+        current_chunk_text.push_str(line_with_newline);
+
         current_line_count += 1;
+        current_byte_offset += line_with_newline.len();
+
         if current_line_count == chunk_size_lines {
             chunks.push(Chunk {
                 chunk_id: next_chunk_id,
                 source_path: file_data.path.clone(),
                 text: std::mem::take(&mut current_chunk_text),
-                start_byte: 0,
-                end_byte: 0,
+                start_byte: current_start_byte,
+                end_byte: current_byte_offset,
                 start_line: current_start_line,
                 end_line: actual_line_number,
             });
-
             next_chunk_id += 1;
             current_line_count = 0;
             current_start_line = actual_line_number + 1;
+            current_start_byte = current_byte_offset;
         }
     }
     if current_line_count > 0 {
@@ -52,8 +57,8 @@ pub fn from_file_data(
             chunk_id: next_chunk_id,
             source_path: file_data.path.clone(),
             text: std::mem::take(&mut current_chunk_text),
-            start_byte: 0,
-            end_byte: 0,
+            start_byte: current_start_byte,
+            end_byte: current_byte_offset,
             start_line: current_start_line,
             end_line: current_start_line + current_line_count - 1,
         });
