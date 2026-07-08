@@ -17,12 +17,10 @@ def load_chunks(path: str) -> list[dict]:
 def search_chunks(
     query: str,
     chunks: list[dict],
+    embeddings: np.ndarray,
     model: SentenceTransformer,
     top_k: int = 3,
 ) -> list[tuple[float, dict]]:
-    texts = [chunk["text"] for chunk in chunks]
-
-    embeddings = model.encode(texts, normalize_embeddings=True)
     query_embedding = model.encode(query, normalize_embeddings=True)
 
     scores = embeddings @ query_embedding
@@ -42,11 +40,19 @@ def search_chunks(
 if __name__ == "__main__":
     chunks = load_chunks("output.jsonl")
 
+    embeddings = np.load("embeddings.npy")
+
+    print(f"Loaded {len(chunks)} chunks")
+    print(f"Loaded embeddings with shape: {embeddings.shape}")
+
+    print("Loading embedding model...")
     model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    query = "line 3"
+    query = input("\nQuery: ")
 
-    results = search_chunks(query, chunks, model, top_k=3)
+    results = search_chunks(query, chunks, embeddings, model, top_k=3)
+
+    print(f"\nResults for: {query}\n")
 
     for score, chunk in results:
         print(f"Score: {score:.4f}")

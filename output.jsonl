@@ -1,3 +1,3 @@
-{"chunk_id":1,"source_path":"input.txt","text":"line 1\nline 2\n","start_byte":0,"end_byte":0,"start_line":1,"end_line":2}
-{"chunk_id":2,"source_path":"input.txt","text":"line 3\nline 4\n","start_byte":0,"end_byte":0,"start_line":3,"end_line":4}
-{"chunk_id":3,"source_path":"input.txt","text":"line 5\n","start_byte":0,"end_byte":0,"start_line":5,"end_line":5}
+{"chunk_id":1,"source_path":"input.txt","text":"Rust ownership means each value has a single owner.\nBorrowing allows code to access data without taking ownership.\n","start_byte":0,"end_byte":115,"start_line":1,"end_line":2}
+{"chunk_id":2,"source_path":"input.txt","text":"Mutable references allow mutation but only one mutable borrow can exist at a time.\nLifetimes describe how long references are valid.\n","start_byte":115,"end_byte":248,"start_line":3,"end_line":4}
+{"chunk_id":3,"source_path":"input.txt","text":"The borrow checker prevents dangling references and data races.","start_byte":248,"end_byte":311,"start_line":5,"end_line":5}

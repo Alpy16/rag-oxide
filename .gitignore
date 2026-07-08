@@ -4,3 +4,4 @@ __pycache__/
 target/
 output.jsonl
 input.txt
+embeddings.npy

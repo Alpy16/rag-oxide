@@ -1,5 +1,5 @@
-line 1
-line 2
-line 3
-line 4
-line 5
+Rust ownership means each value has a single owner.
+Borrowing allows code to access data without taking ownership.
+Mutable references allow mutation but only one mutable borrow can exist at a time.
+Lifetimes describe how long references are valid.
+The borrow checker prevents dangling references and data races.
